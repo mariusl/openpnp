@@ -13,6 +13,7 @@ import org.openpnp.gui.support.Icons;
 import org.openpnp.gui.support.PropertySheetWizardAdapter;
 import org.openpnp.gui.support.Wizard;
 import org.openpnp.machine.reference.psh.NozzleTipsPropertySheetHolder;
+import org.openpnp.machine.reference.wizards.ReferenceNozzleCameraOffsetWizard;
 import org.openpnp.machine.reference.wizards.ReferenceNozzleConfigurationWizard;
 import org.openpnp.model.Configuration;
 import org.openpnp.model.Length;
@@ -71,6 +72,11 @@ public class ReferenceNozzle extends AbstractNozzle implements ReferenceHeadMoun
         });
     }
 
+    public ReferenceNozzle(String id) {
+        this();
+        this.id = id;
+    }
+    
     public boolean isLimitRotation() {
         return limitRotation;
     }
@@ -138,7 +144,9 @@ public class ReferenceNozzle extends AbstractNozzle implements ReferenceHeadMoun
         this.part = part;
         getDriver().pick(this);
         getMachine().fireMachineHeadActivity(head);
-        Thread.sleep(pickDwellMilliseconds);
+        
+        // Dwell Time
+        Thread.sleep(this.getPickDwellMilliseconds() + nozzleTip.getPickDwellMilliseconds());
 
         Actuator actuator = getHead().getActuatorByName(vacuumSenseActuatorName);
         if (actuator != null) {
@@ -170,7 +178,9 @@ public class ReferenceNozzle extends AbstractNozzle implements ReferenceHeadMoun
         getDriver().place(this);
         this.part = null;
         getMachine().fireMachineHeadActivity(head);
-        Thread.sleep(placeDwellMilliseconds);
+        
+        // Dwell Time
+        Thread.sleep(this.getPlaceDwellMilliseconds() + nozzleTip.getPlaceDwellMilliseconds());
 
         Actuator actuator = getHead().getActuatorByName(vacuumSenseActuatorName);
         if (actuator != null) {
@@ -367,7 +377,10 @@ public class ReferenceNozzle extends AbstractNozzle implements ReferenceHeadMoun
 
     @Override
     public PropertySheet[] getPropertySheets() {
-        return new PropertySheet[] {new PropertySheetWizardAdapter(getConfigurationWizard())};
+        return new PropertySheet[] {
+                new PropertySheetWizardAdapter(getConfigurationWizard()),
+                new PropertySheetWizardAdapter(new ReferenceNozzleCameraOffsetWizard(this), "Offset Wizard")
+        };
     }
 
     @Override
